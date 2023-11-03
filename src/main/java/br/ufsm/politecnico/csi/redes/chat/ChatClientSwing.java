@@ -9,12 +9,15 @@ import lombok.SneakyThrows;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * 
@@ -48,15 +51,15 @@ public class ChatClientSwing extends JFrame {
                 socket.receive(packet);
                 Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
 
-                if (!sonda.getUsuario().equals(meuUsuario.getNome())) {
+                if (!sonda.getRemetente().equals(meuUsuario.getNome())) {
                     //atualiza o tempo da ultima mensagem de radar recebida!
-                    lastRadarTimeMap.put(sonda.getUsuario(), System.currentTimeMillis());
+                    lastRadarTimeMap.put(sonda.getRemetente(), System.currentTimeMillis());
 
                     System.out.println("[SONDA RECEBIDA] " + sonda);
-                    int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
+                    int idx = dfListModel.indexOf(new Usuario(sonda.getRemetente(),
                             StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                     if (idx == -1) {
-                        dfListModel.addElement(new Usuario(sonda.getUsuario(),
+                        dfListModel.addElement(new Usuario(sonda.getRemetente(),
                                 StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                     } else {
                         Usuario usuario = (Usuario) dfListModel.getElementAt(idx);
@@ -100,7 +103,8 @@ public class ChatClientSwing extends JFrame {
             while (true) {
 
                 Mensagem mensagem = new Mensagem(
-                        "sonda",
+                        1,
+                        "",
                         meuUsuario.getNome(),
                         ChatClientSwing.this.meuUsuario.getStatus().toString());
 
@@ -119,6 +123,9 @@ public class ChatClientSwing extends JFrame {
             }
         }
     }
+
+    // Parte 2: TCP session
+
     public ChatClientSwing() throws UnknownHostException {
         setLayout(new GridBagLayout());
         new Thread(new EnviaSonda()).start();
@@ -202,8 +209,6 @@ public class ChatClientSwing extends JFrame {
 
     private JComponent criaLista() {
         dfListModel = new DefaultListModel();
-        //dfListModel.addElement(new Usuario("Fulano", StatusUsuario.NAO_PERTURBE, null));
-        //dfListModel.addElement(new Usuario("Cicrano", StatusUsuario.DISPONIVEL, null));
         listaChat = new JList(dfListModel);
         listaChat.addMouseListener(new MouseAdapter() {
             @SneakyThrows
@@ -227,7 +232,6 @@ public class ChatClientSwing extends JFrame {
         JTextArea areaChat;
         JTextField campoEntrada;
         Usuario usuario;
-
         Socket socket;
 
         PainelChatPVT(Usuario usuario, Socket socket) {
@@ -260,8 +264,81 @@ public class ChatClientSwing extends JFrame {
 
     }
 
+    public class ChatSession {
+        private Socket socket;
+        private ObjectInputStream inputStream;
+        private ObjectOutputStream outputStream;
+        private List<ChatSessionListener> listeners = new ArrayList<>();
+        private BlockingQueue<String> outgoingMessages = new LinkedBlockingQueue<>();
+        private ObjectMapper objectMapper = new ObjectMapper();
+
+        public ChatSession(Socket socket) throws IOException {
+            this.socket = socket;
+            this.outputStream = new ObjectOutputStream(socket.getOutputStream());
+            this.inputStream = new ObjectInputStream(socket.getInputStream());
+            startMessageSender();
+            startMessageReceiver();
+        }
+
+        public void sendMessage(String text) {
+            Mensagem message = new Mensagem(generateMessageId(), text, meuUsuario.getNome(), null);
+            try {
+                String jsonMessage = objectMapper.writeValueAsString(message);
+                outgoingMessages.put(jsonMessage);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void addChatSessionListener(ChatSessionListener listener) {
+            listeners.add(listener);
+        }
+
+        private void startMessageSender() {
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        String jsonMessage = outgoingMessages.take();
+                        outputStream.writeObject(jsonMessage);
+                        outputStream.flush();
+                    }
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+
+        private void startMessageReceiver() {
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        String jsonMessage = (String) inputStream.readObject();
+                        Mensagem message = objectMapper.readValue(jsonMessage, Mensagem.class);
+                        for (ChatSessionListener listener : listeners) {
+                            listener.onMessageReceived(message);
+                        }
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    // Handle disconnection
+                    for (ChatSessionListener listener : listeners) {
+                        listener.onDisconnected();
+                    }
+                }
+            }).start();
+        }
+
+        private int generateMessageId() {
+            final var longValue = (int) System.currentTimeMillis();
+            return 1 + longValue;
+        }
+
+        public interface ChatSessionListener {
+            void onMessageReceived(Mensagem message);
+            void onDisconnected();
+        }
+    }
+
     public static void main(String[] args) throws UnknownHostException {
         new ChatClientSwing();
-
     }
 }
