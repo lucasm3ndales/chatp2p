@@ -42,21 +42,60 @@ public class ChatClientSwing extends JFrame {
                     Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
 
                     if (!sonda.getUsuario().equals(meuUsuario.nome)) {
+                        atualizarHoraRecebimento(sonda.getUsuario());
+
 //                        System.out.println("[SONDA RECEBIDA] " + sonda);
                         int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
                                 StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                         if (idx == -1) {
-                            dfListModel.addElement(new Usuario(sonda.getUsuario(),
-                                    StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
+                            dfListModel.addElement(new Usuario(
+                                    sonda.getUsuario(),
+                                    StatusUsuario.valueOf(sonda.getStatus()),
+                                    packet.getAddress(), System.currentTimeMillis())
+                            );
+
                         } else {
                             Usuario usuario = (Usuario) dfListModel.getElementAt(idx);
                             usuario.setStatus(StatusUsuario.valueOf(sonda.getStatus()));
                             dfListModel.remove(idx);
                             dfListModel.add(idx, usuario);
                         }
+                        verificarInatividade();
                     }
+
+
                 } catch (IOException e) {
                     System.out.println("Erro ao receber pacote: " + e.getMessage());
+                }
+            }
+        }
+
+        private void atualizarHoraRecebimento(String nomeUsuario) {
+            synchronized (dfListModel) {
+                // Procure o usuário na lista dfListModel e atualize a hora de recebimento
+                for (int i = 0; i < dfListModel.size(); i++) {
+                    Usuario usuario = (Usuario) dfListModel.getElementAt(i);
+                    if (usuario.getNome().equals(nomeUsuario)) {
+                        usuario.setLastSonda(System.currentTimeMillis());
+                        dfListModel.setElementAt(usuario, i);
+                        break;
+                    }
+                }
+            }
+        }
+        private void verificarInatividade() {
+            long currentTime = System.currentTimeMillis();
+            long inatividadeMaxima = 10000; // 30 segundos em milissegundos
+
+            synchronized (dfListModel) {
+                for (int i = 0; i < dfListModel.size(); i++) {
+                    Usuario usuario = (Usuario) dfListModel.getElementAt(i);
+                    long lastSondaReceivedTime = usuario.getLastSonda();
+                    // Se o tempo decorrido for superior à inatividade máxima, remova o usuário
+                    if (currentTime - lastSondaReceivedTime > inatividadeMaxima) {
+                        //System.out.printf("CAIU");
+                        dfListModel.removeElementAt(i); // Remove o usuário da lista
+                    }
                 }
             }
         }
@@ -243,11 +282,19 @@ public class ChatClientSwing extends JFrame {
         private String nome;
         private StatusUsuario status;
         private InetAddress endereco;
+        private Long lastSonda;
 
         public Usuario(String nome, StatusUsuario status, InetAddress endereco) {
             this.nome = nome;
             this.status = status;
             this.endereco = endereco;
+        }
+
+        public Usuario(String nome, StatusUsuario status, InetAddress endereco, Long lastSonda) {
+            this.nome = nome;
+            this.status = status;
+            this.endereco = endereco;
+            this.lastSonda = lastSonda;
         }
 
         @Override
