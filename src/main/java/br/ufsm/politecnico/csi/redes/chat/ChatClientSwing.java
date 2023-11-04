@@ -7,7 +7,7 @@ import lombok.SneakyThrows;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.*;
 
@@ -20,7 +20,8 @@ import java.util.*;
  */
 public class ChatClientSwing extends JFrame {
 
-    private DatagramSocket socket = new DatagramSocket(8084);
+    private DatagramSocket socketSonda = new DatagramSocket(8084);
+    private Socket socketTcp;
     private Usuario meuUsuario;
     private final String endBroadcast = "255.255.255.255";
     private JList listaChat;
@@ -38,7 +39,7 @@ public class ChatClientSwing extends JFrame {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
 
                 try {
-                    socket.receive(packet);
+                    socketSonda.receive(packet);
                     Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
 
                     if (!sonda.getUsuario().equals(meuUsuario.nome)) {
@@ -127,7 +128,7 @@ public class ChatClientSwing extends JFrame {
                             InetAddress.getByName(endBroadcast), 8084
 
                     );
-                    socket.send(packet);
+                    socketSonda.send(packet);
                 }
                 try {
                     Thread.sleep(5000);
@@ -135,6 +136,7 @@ public class ChatClientSwing extends JFrame {
             }
         }
     }
+
     public ChatClientSwing() throws UnknownHostException, SocketException {
         setLayout(new GridBagLayout());
         JMenuBar menuBar = new JMenuBar();
@@ -226,9 +228,9 @@ public class ChatClientSwing extends JFrame {
                 if (evt.getClickCount() == 2) {
                     int index = list.locationToIndex(evt.getPoint());
                     Usuario user = (Usuario) list.getModel().getElementAt(index);
-                    Socket soc = new Socket(user.getEndereco(), 8085);
+                    socketTcp = new Socket(user.getEndereco(), 8085);
                     if (chatsAbertos.add(user)) {
-                        tabbedPane.add(user.toString(), new PainelChatPVT(user, soc));
+                        tabbedPane.add(user.toString(), new PainelChatPVT(user, socketTcp));
                     }
                 }
             }
@@ -250,17 +252,63 @@ public class ChatClientSwing extends JFrame {
             areaChat.setEditable(false);
             campoEntrada = new JTextField();
             this.socket = socket;
+            new Thread(new RecebeMensagens()).start();
             campoEntrada.addActionListener(new ActionListener() {
                 @SneakyThrows
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    ((JTextField) e.getSource()).setText("");
-                    areaChat.append(meuUsuario.getNome() + "> " + e.getActionCommand() + "\n");
-                    socket.getOutputStream().write(e.getActionCommand().getBytes());
+                    String mensagem = e.getActionCommand();
+                    if (!mensagem.isEmpty()) {
+                        ((JTextField) e.getSource()).setText(""); // Limpa o campo de entrada
+                        enviarMensagem(mensagem);
+                    }
                 }
             });
             add(new JScrollPane(areaChat), new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
             add(campoEntrada, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        }
+
+        private void enviarMensagem(String mensagem) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                String mensagemSerializada = objectMapper.writeValueAsString(new Mensagem(meuUsuario.getNome(), mensagem));
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                out.writeUTF(mensagemSerializada);
+                areaChat.append("[ " + meuUsuario.getNome() + " ]: " + mensagem + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void fecharConexao() {
+            try {
+                socket.close(); // Fecha o socket
+                // Remove a aba do tabbedPane
+                Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
+                if (tabComponent != null) {
+                    tabbedPane.remove(tabComponent);
+                    chatsAbertos.remove(usuario);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private class RecebeMensagens implements Runnable {
+            @Override
+            public void run() {
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    DataInputStream in = new DataInputStream(socket.getInputStream());
+                    while (true) {
+                        String mensagemSerializada = in.readUTF();
+                        Mensagem mensagem = objectMapper.readValue(mensagemSerializada, Mensagem.class);
+                        areaChat.append("[ " + usuario.getNome() + " ]: " + mensagem.getText() + "\n");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         public Usuario getUsuario() {
