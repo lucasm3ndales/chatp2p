@@ -1,30 +1,23 @@
 package br.ufsm.politecnico.csi.redes.chat;
 
 import br.ufsm.politecnico.csi.redes.model.Mensagem;
-import br.ufsm.politecnico.csi.redes.model.StatusUsuario;
-import br.ufsm.politecnico.csi.redes.model.Usuario;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * 
+ *
  * User: Rafael
  * Date: 13/10/14
  * Time: 10:28
- * 
+ *
  */
 public class ChatClientSwing extends JFrame {
 
@@ -35,14 +28,11 @@ public class ChatClientSwing extends JFrame {
     private JTabbedPane tabbedPane = new JTabbedPane();
     private Set<Usuario> chatsAbertos = new HashSet<>();
 
-    // Parte 1: Sonda UDP
     public class RecebeSonda implements Runnable {
-        private final Map<String, Long> lastRadarTimeMap = new ConcurrentHashMap<>();
-
         @SneakyThrows
         @Override
         public void run() {
-            DatagramSocket socket = new DatagramSocket(8084);
+            DatagramSocket socket = new DatagramSocket(8083);
             ObjectMapper om = new ObjectMapper();
 
             while (true) {
@@ -51,15 +41,15 @@ public class ChatClientSwing extends JFrame {
                 socket.receive(packet);
                 Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
 
-                if (!sonda.getRemetente().equals(meuUsuario.getNome())) {
-                    //atualiza o tempo da ultima mensagem de radar recebida!
-                    lastRadarTimeMap.put(sonda.getRemetente(), System.currentTimeMillis());
+                if (!sonda.getUsuario().equals(meuUsuario.nome)) {
+                    // Atualiza a hora do recebimento da mensagem de sonda
+                    atualizarHoraRecebimento(sonda.getUsuario());
 
-                    System.out.println("[SONDA RECEBIDA] " + sonda);
-                    int idx = dfListModel.indexOf(new Usuario(sonda.getRemetente(),
+                    //System.out.println("[SONDA RECEBIDA] " + sonda);
+                    int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
                             StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                     if (idx == -1) {
-                        dfListModel.addElement(new Usuario(sonda.getRemetente(),
+                        dfListModel.addElement(new Usuario(sonda.getUsuario(),
                                 StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                     } else {
                         Usuario usuario = (Usuario) dfListModel.getElementAt(idx);
@@ -67,28 +57,41 @@ public class ChatClientSwing extends JFrame {
                         dfListModel.remove(idx);
                         dfListModel.add(idx, usuario);
                     }
+                    // Verificação de inatividade do usuário
+                    verificarInatividade();
                 }
-                removerUsuariosInativos();
             }
         }
 
-        private void removerUsuariosInativos() {
+        // Método para atualizar a hora de recebimento da sonda para um usuário
+        private void atualizarHoraRecebimento(String nomeUsuario) {
+            // Procure o usuário na lista dfListModel e atualize a hora de recebimento
+            for (int i = 0; i < dfListModel.size(); i++) {
+                Usuario usuario = (Usuario) dfListModel.getElementAt(i);
+                if (usuario.getNome().equals(nomeUsuario)) {
+                    usuario.setLastReceiveSonda(System.currentTimeMillis());
+                    dfListModel.setElementAt(usuario, i);
+                    break;
+                }
+            }
+        }
+
+        // Método para verificar inatividade e remover usuários inativos
+        private void verificarInatividade() {
             long currentTime = System.currentTimeMillis();
-            long tempoInatividade = 30000; // 30 segundos
 
-            for (String usuario : lastRadarTimeMap.keySet()) {
-                long lastRadarTime = lastRadarTimeMap.get(usuario);
-                if (currentTime - lastRadarTime > tempoInatividade) {
-                    // Remove o usuário da lista de usuários online
-                    int idx = dfListModel.indexOf(usuario);
-                    if (idx != -1) {
-                        dfListModel.remove(idx);
-                    }
-                    lastRadarTimeMap.remove(usuario);
+            for(int i = 0; i < dfListModel.size(); i++) {
+                Usuario usuario = (Usuario) dfListModel.getElementAt(i);
+                long lastSondaReceivedTime = usuario.getLastReceiveSonda();
+                // Se o tempo decorrido for superior a 30 segundos (30000 milissegundos), remova o usuário
+                if (currentTime - lastSondaReceivedTime > 30000) {
+                    dfListModel.removeElementAt(i); // Remove o usuário da lista
                 }
             }
         }
+
     }
+
     public class EnviaSonda implements Runnable {
 
         @SneakyThrows
@@ -101,31 +104,24 @@ public class ChatClientSwing extends JFrame {
             }
             DatagramSocket socket = new DatagramSocket();
             while (true) {
-
                 Mensagem mensagem = new Mensagem(
-                        1,
-                        "",
-                        meuUsuario.getNome(),
-                        ChatClientSwing.this.meuUsuario.getStatus().toString());
-
+                        "SONDA_UDP",
+                        meuUsuario.nome,
+                        ChatClientSwing.this.meuUsuario.status.toString());
                 ObjectMapper om = new ObjectMapper();
                 byte[] msgJson = om.writeValueAsBytes(mensagem);
 
-                for (int n = 1; n < 255; n++) {
-                    DatagramPacket packet = new DatagramPacket(msgJson,
-                            msgJson.length,
-                            InetAddress.getByName("192.168.81." + n), 8084);
-                    socket.send(packet);
-                }
+                //enviam sonda para lista de IPs
+                DatagramPacket packet = new DatagramPacket(msgJson,
+                        msgJson.length,
+                        InetAddress.getByName(endBroadcast), 8084);
+                socket.send(packet);
                 try {
                     Thread.sleep(5000);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) { }
             }
         }
     }
-
-    // Parte 2: TCP session
-
     public ChatClientSwing() throws UnknownHostException {
         setLayout(new GridBagLayout());
         new Thread(new EnviaSonda()).start();
@@ -232,6 +228,7 @@ public class ChatClientSwing extends JFrame {
         JTextArea areaChat;
         JTextField campoEntrada;
         Usuario usuario;
+
         Socket socket;
 
         PainelChatPVT(Usuario usuario, Socket socket) {
@@ -264,81 +261,76 @@ public class ChatClientSwing extends JFrame {
 
     }
 
-    public class ChatSession {
-        private Socket socket;
-        private ObjectInputStream inputStream;
-        private ObjectOutputStream outputStream;
-        private List<ChatSessionListener> listeners = new ArrayList<>();
-        private BlockingQueue<String> outgoingMessages = new LinkedBlockingQueue<>();
-        private ObjectMapper objectMapper = new ObjectMapper();
-
-        public ChatSession(Socket socket) throws IOException {
-            this.socket = socket;
-            this.outputStream = new ObjectOutputStream(socket.getOutputStream());
-            this.inputStream = new ObjectInputStream(socket.getInputStream());
-            startMessageSender();
-            startMessageReceiver();
-        }
-
-        public void sendMessage(String text) {
-            Mensagem message = new Mensagem(generateMessageId(), text, meuUsuario.getNome(), null);
-            try {
-                String jsonMessage = objectMapper.writeValueAsString(message);
-                outgoingMessages.put(jsonMessage);
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void addChatSessionListener(ChatSessionListener listener) {
-            listeners.add(listener);
-        }
-
-        private void startMessageSender() {
-            new Thread(() -> {
-                try {
-                    while (true) {
-                        String jsonMessage = outgoingMessages.take();
-                        outputStream.writeObject(jsonMessage);
-                        outputStream.flush();
-                    }
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        }
-
-        private void startMessageReceiver() {
-            new Thread(() -> {
-                try {
-                    while (true) {
-                        String jsonMessage = (String) inputStream.readObject();
-                        Mensagem message = objectMapper.readValue(jsonMessage, Mensagem.class);
-                        for (ChatSessionListener listener : listeners) {
-                            listener.onMessageReceived(message);
-                        }
-                    }
-                } catch (IOException | ClassNotFoundException e) {
-                    // Handle disconnection
-                    for (ChatSessionListener listener : listeners) {
-                        listener.onDisconnected();
-                    }
-                }
-            }).start();
-        }
-
-        private int generateMessageId() {
-            final var longValue = (int) System.currentTimeMillis();
-            return 1 + longValue;
-        }
-
-        public interface ChatSessionListener {
-            void onMessageReceived(Mensagem message);
-            void onDisconnected();
-        }
-    }
-
     public static void main(String[] args) throws UnknownHostException {
         new ChatClientSwing();
+
     }
+
+    public enum StatusUsuario {
+        DISPONIVEL, NAO_PERTURBE, VOLTO_LOGO
+    }
+
+    public class Usuario {
+
+        private String nome;
+        private StatusUsuario status;
+        private InetAddress endereco;
+        private Long  lastReceiveSonda;
+
+        public Usuario(String nome, StatusUsuario status, InetAddress endereco) {
+            this.nome = nome;
+            this.status = status;
+            this.endereco = endereco;
+        }
+
+        public Long getLastReceiveSonda() {
+            return this.lastReceiveSonda;
+        }
+
+        public void  setLastReceiveSonda(Long  lastReceiveSonda) {
+            this.lastReceiveSonda = lastReceiveSonda;
+        }
+
+        public String getNome() {
+            return nome;
+        }
+
+        public void setNome(String nome) {
+            this.nome = nome;
+        }
+
+        public StatusUsuario getStatus() {
+            return status;
+        }
+
+        public void setStatus(StatusUsuario status) {
+            this.status = status;
+        }
+
+        public InetAddress getEndereco() {
+            return endereco;
+        }
+
+        public void setEndereco(InetAddress endereco) {
+            this.endereco = endereco;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Usuario usuario = (Usuario) o;
+            return Objects.equals(nome, usuario.nome) && Objects.equals(endereco, usuario.endereco);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(nome, endereco);
+        }
+
+        public String toString() {
+            return this.getNome() + " (" + getStatus().toString() + ")";
+        }
+    }
+
 }
