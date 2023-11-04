@@ -10,7 +10,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 public class Mensagem {
-
     private String tipoMensagem;
     private String usuario;
     private String status;
