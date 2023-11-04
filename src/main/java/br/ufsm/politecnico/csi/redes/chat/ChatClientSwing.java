@@ -245,7 +245,7 @@ public class ChatClientSwing extends JFrame {
         Usuario usuario;
         Socket socket;
 
-        PainelChatPVT(Usuario usuario, Socket socket) {
+        PainelChatPVT(Usuario usuario, Socket socket)  {
             setLayout(new GridBagLayout());
             areaChat = new JTextArea();
             this.usuario = usuario;
@@ -259,8 +259,13 @@ public class ChatClientSwing extends JFrame {
                 public void actionPerformed(ActionEvent e) {
                     String mensagem = e.getActionCommand();
                     if (!mensagem.isEmpty()) {
-                        ((JTextField) e.getSource()).setText(""); // Limpa o campo de entrada
-                        enviarMensagem(mensagem);
+                        ((JTextField) e.getSource()).setText("");
+                        try {
+                            enviarMensagem(mensagem);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            fecharConexao();
+                        }
                     }
                 }
             });
@@ -283,7 +288,6 @@ public class ChatClientSwing extends JFrame {
         private void fecharConexao() {
             try {
                 socket.close(); // Fecha o socket
-                // Remove a aba do tabbedPane
                 Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
                 if (tabComponent != null) {
                     tabbedPane.remove(tabComponent);
