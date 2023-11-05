@@ -42,7 +42,7 @@ public class ChatClientSwing extends JFrame {
                     socketSonda.receive(packet);
                     Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
 
-                    if (!sonda.getUsuario().equals(meuUsuario.nome)) {
+                    //if (!sonda.getUsuario().equals(meuUsuario.nome)) {
                         atualizarHoraRecebimento(sonda.getUsuario());
 
 //                        System.out.println("[SONDA RECEBIDA] " + sonda);
@@ -52,7 +52,8 @@ public class ChatClientSwing extends JFrame {
                             dfListModel.addElement(new Usuario(
                                     sonda.getUsuario(),
                                     StatusUsuario.valueOf(sonda.getStatus()),
-                                    packet.getAddress(), System.currentTimeMillis())
+                                    packet.getAddress(),
+                                    System.currentTimeMillis())
                             );
 
                         } else {
@@ -62,12 +63,10 @@ public class ChatClientSwing extends JFrame {
                             dfListModel.add(idx, usuario);
                         }
                         verificarInatividade();
-                    }
+                    //}
 
 
-                } catch (IOException e) {
-                    System.out.println("Erro ao receber pacote: " + e.getMessage());
-                }
+                } catch (IOException e) {}
             }
         }
 
@@ -86,7 +85,7 @@ public class ChatClientSwing extends JFrame {
         }
         private void verificarInatividade() {
             long currentTime = System.currentTimeMillis();
-            long inatividadeMaxima = 10000; // 30 segundos em milissegundos
+            long inatividadeMaxima = 30000; // 30 segundos em milissegundos
 
             synchronized (dfListModel) {
                 for (int i = 0; i < dfListModel.size(); i++) {
@@ -229,7 +228,9 @@ public class ChatClientSwing extends JFrame {
                     int index = list.locationToIndex(evt.getPoint());
                     Usuario user = (Usuario) list.getModel().getElementAt(index);
                     socketTcp = new Socket(user.getEndereco(), 8085);
+                    System.out.println(socketTcp);
                     if (chatsAbertos.add(user)) {
+                        System.out.printf("CAIU");
                         tabbedPane.add(user.toString(), new PainelChatPVT(user, socketTcp));
                     }
                 }
@@ -309,7 +310,7 @@ public class ChatClientSwing extends JFrame {
                         Mensagem mensagem = objectMapper.readValue(mensagemSerializada, Mensagem.class);
                         areaChat.append("[ " + usuario.getNome() + " ]: " + mensagem.getText() + "\n");
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
