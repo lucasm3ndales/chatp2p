@@ -42,7 +42,7 @@ public class ChatClientSwing extends JFrame {
                 while (true) {
                     String mensagemSerializada = in.readUTF();
                     Mensagem mensagem = objectMapper.readValue(mensagemSerializada, Mensagem.class);
-                    painel.areaChat.append(painel.usuario.getNome() + ": " + mensagem.getText() + "\n");
+                    painel.areaChat.append("[ " + painel.usuario.getNome() + " ]: " + mensagem.getText() + "\n");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -146,7 +146,7 @@ public class ChatClientSwing extends JFrame {
                     DatagramPacket packet = new DatagramPacket(
                             msgJson,
                             msgJson.length,
-                            InetAddress.getByName("localhost"), 8084
+                            InetAddress.getByName(endBroadcast), 8084
 
                     );
                     socketSonda.send(packet);
@@ -278,10 +278,8 @@ public class ChatClientSwing extends JFrame {
                 if (evt.getClickCount() == 2) {
                     int index = list.locationToIndex(evt.getPoint());
                     Usuario user = (Usuario) list.getModel().getElementAt(index);
-                    System.out.println(user.toString());
                     synchronized(ChatClientSwing.this){
                         if (chatsAbertos.add(user)) {
-                            System.out.printf("CAIU");
                             tabbedPane.add(user.toString(), new PainelChatPVT(user, new Socket(user.getEndereco(), 8085)));
                         }
                     }
@@ -351,14 +349,6 @@ public class ChatClientSwing extends JFrame {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        public Usuario getUsuario() {
-            return usuario;
-        }
-
-        public void setUsuario(Usuario usuario) {
-            this.usuario = usuario;
         }
 
         @Override

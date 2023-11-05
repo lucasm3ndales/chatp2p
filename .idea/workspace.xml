@@ -5,31 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a62621a4-a1b3-491d-9c14-2299cebb7025" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$6.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$RecebeMensagens.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/chatp2p.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/Mensageiro$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/Mensageiro$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/Mensageiro.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$2.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$3.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$4$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$4$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$4.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$5.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$5.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$6.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$6.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$EnviaSonda.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$EnviaSonda.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$PainelChatPVT$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$PainelChatPVT$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$PainelChatPVT$RecebeMensagens.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$PainelChatPVT.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$PainelChatPVT.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$RecebeSonda.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$RecebeSonda.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$StatusUsuario.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$StatusUsuario.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$Usuario.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing$Usuario.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/chat/ChatClientSwing.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/model/Mensagem.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/br/ufsm/politecnico/csi/redes/model/Mensagem.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,9 +23,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="2Xl9uTtSME59ccBNUzCKvvI51mB" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -52,6 +36,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "chat__p2p__atualizado",
     "last_opened_file_path": "D:/Área de Trabalho/chatp2p",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -75,5 +60,13 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/chatp2p$ChatClientSwing.ic" NAME="ChatClientSwing Coverage Results" MODIFIED="1699156582757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>br.ufsm.politecnico.csi.redes.chat.*</FILTER>
+    </SUITE>
   </component>
 </project>
