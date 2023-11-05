@@ -10,6 +10,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.Timer;
 
 /**
  *
@@ -28,6 +29,26 @@ public class ChatClientSwing extends JFrame {
     private DefaultListModel dfListModel;
     private JTabbedPane tabbedPane = new JTabbedPane();
     private Set<Usuario> chatsAbertos = new HashSet<>();
+
+    private void limparUsuariosInativos() {
+
+        long currentTime = System.currentTimeMillis();
+        long inatividadeMaxima = 2000;
+        System.out.println("Lista:" + dfListModel);
+        if (dfListModel != null) {
+
+            synchronized (dfListModel) {
+                for (int i = 0; i < dfListModel.size(); i++) {
+                    Usuario usuario = (Usuario) dfListModel.getElementAt(i);
+                    long lastSondaReceivedTime = usuario.getLastSonda();
+                    // Se o tempo decorrido for superior à inatividade máxima, remova o usuário
+                    if (currentTime - lastSondaReceivedTime > inatividadeMaxima) {
+                        dfListModel.removeElementAt(i);
+                    }
+                }
+            }
+        }
+    }
 
     private static class RecebeMensagens implements Runnable {
         private PainelChatPVT painel;
@@ -67,7 +88,7 @@ public class ChatClientSwing extends JFrame {
                     //if (!sonda.getUsuario().equals(meuUsuario.nome)) {
                     atualizarHoraRecebimento(sonda.getUsuario());
 
-//                        System.out.println("[SONDA RECEBIDA] " + sonda);
+                        System.out.println("[SONDA RECEBIDA] " + sonda);
                     int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
                             StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
                     if (idx == -1) {
@@ -159,6 +180,17 @@ public class ChatClientSwing extends JFrame {
     }
 
     public ChatClientSwing() throws UnknownHostException, SocketException, IOException {
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                limparUsuariosInativos();
+            }
+        }, 0, 10000);
+
+
+
         setLayout(new GridBagLayout());
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("Status");
