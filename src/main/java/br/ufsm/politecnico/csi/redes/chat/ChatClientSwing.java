@@ -34,7 +34,7 @@ public class ChatClientSwing extends JFrame {
 
         long currentTime = System.currentTimeMillis();
         long inatividadeMaxima = 2000;
-        System.out.println("Lista:" + dfListModel);
+
         if (dfListModel != null) {
 
             synchronized (dfListModel) {
@@ -84,29 +84,28 @@ public class ChatClientSwing extends JFrame {
                 try {
                     socketSonda.receive(packet);
                     Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
+                    if (!sonda.getUsuario().equals(meuUsuario.nome)) {
+                        atualizarHoraRecebimento(sonda.getUsuario());
 
-                    //if (!sonda.getUsuario().equals(meuUsuario.nome)) {
-                    atualizarHoraRecebimento(sonda.getUsuario());
 
-                        System.out.println("[SONDA RECEBIDA] " + sonda);
-                    int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
-                            StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
-                    if (idx == -1) {
-                        dfListModel.addElement(new Usuario(
-                                sonda.getUsuario(),
-                                StatusUsuario.valueOf(sonda.getStatus()),
-                                packet.getAddress(),
-                                System.currentTimeMillis())
-                        );
+                        int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
+                                StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
+                        if (idx == -1) {
+                            dfListModel.addElement(new Usuario(
+                                    sonda.getUsuario(),
+                                    StatusUsuario.valueOf(sonda.getStatus()),
+                                    packet.getAddress(),
+                                    System.currentTimeMillis())
+                            );
 
-                    } else {
-                        Usuario usuario = (Usuario) dfListModel.getElementAt(idx);
-                        usuario.setStatus(StatusUsuario.valueOf(sonda.getStatus()));
-                        dfListModel.remove(idx);
-                        dfListModel.add(idx, usuario);
+                        } else {
+                            Usuario usuario = (Usuario) dfListModel.getElementAt(idx);
+                            usuario.setStatus(StatusUsuario.valueOf(sonda.getStatus()));
+                            dfListModel.remove(idx);
+                            dfListModel.add(idx, usuario);
+                        }
+                        verificarInatividade();
                     }
-                    verificarInatividade();
-                    //}
 
 
                 } catch (IOException e) {}
@@ -162,8 +161,6 @@ public class ChatClientSwing extends JFrame {
                         ChatClientSwing.this.meuUsuario.status.toString());
                 ObjectMapper om = new ObjectMapper();
                 byte[] msgJson = om.writeValueAsBytes(mensagem);
-                //enviam sonda para lista de IPs
-                //for(int n = 0;  n < 255; n++) {
                 DatagramPacket packet = new DatagramPacket(
                         msgJson,
                         msgJson.length,
@@ -171,7 +168,6 @@ public class ChatClientSwing extends JFrame {
 
                 );
                 socketSonda.send(packet);
-                //}
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) { }
@@ -322,7 +318,6 @@ public class ChatClientSwing extends JFrame {
     }
 
     class PainelChatPVT extends JPanel {
-
         JTextArea areaChat;
         JTextField campoEntrada;
         Usuario usuario;
@@ -346,8 +341,7 @@ public class ChatClientSwing extends JFrame {
                         try {
                             enviarMensagem(mensagem);
                         } catch (Exception ex) {
-                            ex.printStackTrace();
-                            //fecharConexao();
+                            fecharConexao();
                         }
                     }
                 }
@@ -370,17 +364,32 @@ public class ChatClientSwing extends JFrame {
 
         private void fecharConexao() {
             try {
-                synchronized(ChatClientSwing.this){
-                    //Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
-                    //if (tabComponent != null) {
-                    tabbedPane.remove(this);
-                    chatsAbertos.remove(usuario);
-                    //}
-                    socket.close(); // Fecha o socket
+                synchronized (ChatClientSwing.this) {
+                    Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String mensagem = objectMapper.writeValueAsString(new Mensagem(
+                            meuUsuario.getNome(),
+                            "Conversa encerrada!"
+                    ));
+                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                    out.writeUTF(mensagem);
+                    areaChat.append("[ " + meuUsuario.nome + " ]: " + objectMapper.readValue(mensagem, Mensagem.class).getText() + "\n");
+
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            try {
+                                if (tabComponent != null) {
+                                    tabbedPane.remove(PainelChatPVT.this);
+                                    chatsAbertos.remove(usuario);
+                                }
+                                socket.close();
+                            } catch (IOException e) {}
+                        }
+                    }, 10000);
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            } catch (IOException e) {}
         }
 
         @Override
