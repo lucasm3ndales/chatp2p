@@ -245,8 +245,9 @@ public class ChatClientSwing extends JFrame {
         JTextField campoEntrada;
         Usuario usuario;
         Socket socket;
+        ServerSocket serverSocket = new ServerSocket(8085);
 
-        PainelChatPVT(Usuario usuario, Socket socket)  {
+        PainelChatPVT(Usuario usuario, Socket socket) throws IOException {
             setLayout(new GridBagLayout());
             areaChat = new JTextArea();
             this.usuario = usuario;
@@ -306,6 +307,7 @@ public class ChatClientSwing extends JFrame {
                     ObjectMapper objectMapper = new ObjectMapper();
                     DataInputStream in = new DataInputStream(socket.getInputStream());
                     while (true) {
+                        socket =  serverSocket.accept();
                         String mensagemSerializada = in.readUTF();
                         Mensagem mensagem = objectMapper.readValue(mensagemSerializada, Mensagem.class);
                         areaChat.append("[ " + usuario.getNome() + " ]: " + mensagem.getText() + "\n");
