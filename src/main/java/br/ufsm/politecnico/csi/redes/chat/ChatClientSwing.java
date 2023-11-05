@@ -33,7 +33,7 @@ public class ChatClientSwing extends JFrame {
     private void limparUsuariosInativos() {
 
         long currentTime = System.currentTimeMillis();
-        long inatividadeMaxima = 2000;
+        long inatividadeMaxima = 30000;
 
         if (dfListModel != null) {
 
@@ -331,33 +331,36 @@ public class ChatClientSwing extends JFrame {
         private void fecharConexao() {
             try {
                 synchronized (ChatClientSwing.this) {
-                    Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    String mensagem = objectMapper.writeValueAsString(new Mensagem(
-                            meuUsuario.getNome(),
-                            "Conversa encerrada!"
-                    ));
-                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                    out.writeUTF(mensagem);
-                    areaChat.append("[ " + meuUsuario.nome + " ]: " + objectMapper.readValue(mensagem, Mensagem.class).getText() + "\n");
 
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            try {
-                                if (tabComponent != null) {
+                    Component tabComponent = ChatClientSwing.this.tabbedPane.getComponentAt(tabbedPane.indexOfComponent(PainelChatPVT.this));
+                    if(tabComponent != null) {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        String mensagem = objectMapper.writeValueAsString(new Mensagem(
+                                meuUsuario.getNome(),
+                                "Conversa encerrada!"
+                        ));
+                        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                        out.writeUTF(mensagem);
+                        areaChat.append("[ " + meuUsuario.nome + " ]: " + objectMapper.readValue(mensagem, Mensagem.class).getText() + "\n");
+
+                        Timer timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                try {
+
                                     tabbedPane.remove(PainelChatPVT.this);
                                     chatsAbertos.remove(usuario);
-                                }
-                                socket.close();
-                            } catch (IOException e) {}
-                        }
-                    }, 10000);
+
+                                    socket.close();
+                                } catch (IOException e) {}
+                            }
+                        }, 10000);
+
+                    }
                 }
             } catch (IOException e) {}
         }
-
         @Override
         public int hashCode() {
             final int prime = 31;
