@@ -41,7 +41,6 @@ public class ChatClientSwing extends JFrame {
                 for (int i = 0; i < dfListModel.size(); i++) {
                     Usuario usuario = (Usuario) dfListModel.getElementAt(i);
                     long lastSondaReceivedTime = usuario.getLastSonda();
-                    // Se o tempo decorrido for superior à inatividade máxima, remova o usuário
                     if (currentTime - lastSondaReceivedTime > inatividadeMaxima) {
                         dfListModel.removeElementAt(i);
                     }
@@ -85,8 +84,6 @@ public class ChatClientSwing extends JFrame {
                     socketSonda.receive(packet);
                     Mensagem sonda = om.readValue(buf, 0, packet.getLength(), Mensagem.class);
                     if (!sonda.getUsuario().equals(meuUsuario.nome)) {
-                        atualizarHoraRecebimento(sonda.getUsuario());
-
 
                         int idx = dfListModel.indexOf(new Usuario(sonda.getUsuario(),
                                 StatusUsuario.valueOf(sonda.getStatus()), packet.getAddress()));
@@ -104,41 +101,10 @@ public class ChatClientSwing extends JFrame {
                             dfListModel.remove(idx);
                             dfListModel.add(idx, usuario);
                         }
-                        verificarInatividade();
                     }
 
 
                 } catch (IOException e) {}
-            }
-        }
-
-        private void atualizarHoraRecebimento(String nomeUsuario) {
-            synchronized (dfListModel) {
-                // Procure o usuário na lista dfListModel e atualize a hora de recebimento
-                for (int i = 0; i < dfListModel.size(); i++) {
-                    Usuario usuario = (Usuario) dfListModel.getElementAt(i);
-                    if (usuario.getNome().equals(nomeUsuario)) {
-                        usuario.setLastSonda(System.currentTimeMillis());
-                        dfListModel.setElementAt(usuario, i);
-                        break;
-                    }
-                }
-            }
-        }
-        private void verificarInatividade() {
-            long currentTime = System.currentTimeMillis();
-            long inatividadeMaxima = 30000; // 30 segundos em milissegundos
-
-            synchronized (dfListModel) {
-                for (int i = 0; i < dfListModel.size(); i++) {
-                    Usuario usuario = (Usuario) dfListModel.getElementAt(i);
-                    long lastSondaReceivedTime = usuario.getLastSonda();
-                    // Se o tempo decorrido for superior à inatividade máxima, remova o usuário
-                    if (currentTime - lastSondaReceivedTime > inatividadeMaxima) {
-                        //System.out.printf("CAIU");
-                        dfListModel.removeElementAt(i); // Remove o usuário da lista
-                    }
-                }
             }
         }
     }
